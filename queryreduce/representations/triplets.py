@@ -1,6 +1,6 @@
 from typing import Any, Union
 from dataclasses import dataclass
-from queryprune.utils.config import EmbedConfig
+from queryreduce.utils.config import EmbedConfig
 from torch.nn import tensor
 import numpy as np
 
