@@ -1,39 +1,37 @@
-from typing import Any, Union
-from dataclasses import dataclass
-from queryreduce.utils.config import EmbedConfig
+from typing import Any, Union, NamedTuple
+from queryreduce.utils.config import EmbedConfig, Embedding, Triplet
 from torch.nn import tensor
 import numpy as np
 
-@dataclass
-class Triplet:
-    q : Any
-    d_pos : Any 
-    d_neg : Any
-
 class EmbeddingWrapper():
     def __init__(self, config : EmbedConfig, **kwargs) -> None:
-        self.index = config.index
-        self.doc_LM = config.doc_LM
+        self.model = config.model
+        self.tokenizer = config.tokenizer
 
-        if config.sep_query_LM:
-            self.query_LM = config.query_LM
-        else:
-            self.query_LM = config.doc_LM
+        self.dataset = config.dataset 
+        self.store = config.dataset.doc_store()
+        self.queries = [query for query in config.dataset.queries_iter()]
+        self.q_ids = [query.id for query in self.queries]
     
-    def _retrieve(id : Union[int, str], is_q):
-        return None if not is_q else None
+    def _retrieve(self, id : Union[int, str], is_q):
+        return self.store.get(id) if not is_q else self.queries[self.q_ids.index(id)]
 
-    def _embed(self, txt : str, is_q=False) -> tensor:
-        return self.doc_LM(txt) if not is_q else self.query_LM(txt)
+    def _embed(self, id : Union[int, str], is_q : bool =False) -> tensor:
+        txt = self._retrieve(id, is_q)
+        tok, mask = self.tokenizer(txt) 
+        embedding = self.model.doc(tok, mask) if not is_q else self.model.query(tok, mask)
+        return Embedding(embedding, id)
 
     def create_triplet(self, qid : Union[int, str], dposid : Union[int, str], dnegid : Union[int, str]) -> Triplet:
-        retr = lambda x, y : self._retrieve(x, y)
-
-        q = self._embed(retr(qid, True), True)
-        d_pos = self._embed(retr(dposid, False))
-        d_neg = self._embed(retr(dnegid, False))
+        q = self._embed(qid, True)
+        d_pos = self._embed(dposid, False)
+        d_neg = self._embed(dnegid, False)
 
         return Triplet(q, d_pos, d_neg)
-
-    def create_representation(self, triplet : Triplet) -> tensor:
-        return np.mean([triplet.q, triplet.d_pos, triplet.d_neg], axis=1)
+    
+    def get_docs(self, ids : list) -> list:
+        return self.store.get_many(ids)
+    
+    def get_queries(self, qids : list) -> list:
+        return [self.queries[self.q_ids.index(id)] for id in qids]
+    
