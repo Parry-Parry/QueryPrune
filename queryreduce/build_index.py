@@ -1,4 +1,4 @@
-from queryreduce.distance.distance import group
+from queryreduce.distance.distance import cluster_queries
 from representations.triplets import * 
 import argparse 
 import ir_datasets
@@ -8,6 +8,8 @@ parser = argparse.ArgumentParser(description='Construct embedding clusters from 
 parser.add_argument('-dataset', '-d', type=str, help='Dataset from which to extract triplets')
 parser.add_argument('-portion', '-p', type=int, default=100, help='How much of the dataset to parse')
 parser.add_argument('-out', '-o', type=str, help='Output dir')
+parser.add_argument('-neighbours', '-n', type=int, help='Number of Neighbours to prune')
+parser.add_argument('-epsilon', '-e', type=float, help='Threshold distance')
 parser.add_argument('-token_d', type=str, help='Document Tokenizer')
 parser.add_argument('-pretrain', help='Train model on portion')
 
@@ -33,7 +35,11 @@ if not dataset.has_docpairs():
 
 triplets = [lookup.create_triplet(pair.query_id, pair.doc_id_a, pair.doc_id_b) for pair in dataset.doc_pairs_iter() ]
 
-groups = group(triplets, args.k)
+labels = cluster_queries(triplets, args.k)
+
+
+
+
 
 
 

@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import NamedTuple, Any, Union
 import torch
 from numpy import array
