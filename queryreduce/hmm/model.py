@@ -1,5 +1,6 @@
 import numpy as np
-from queryreduce.distance.distance import init_interpolated_distance 
+from queryreduce.distance import init_interpolated_distance 
+from queryreduce.config import MarkovConfig
 import torch 
 from functools import partial
 
@@ -26,8 +27,8 @@ class Process:
     '''
 
     state_id = 0
-    def __init__(self, config) -> None:
-        self.P = np.zeros((config.triple.shape[0], config.triple.shape[0]), dtype=np.float16)
+    def __init__(self, config : MarkovConfig) -> None:
+        self.P = np.zeros((config.triple.shapes[0], config.triple.shapes[0]), dtype=np.float16)
         self.distance = init_interpolated_distance(config.gpu, config.alpha, config.beta)
         self.triples = config.triples
         self.sample_distr = config.distr
@@ -37,10 +38,9 @@ class Process:
     
     def _step(self):
         if np.all(self.P[self.state_id] == 0):
-            triple = self.triples[self.state_idx]
-            self.P[self.state_idx] = self._distance(triple, self.triples)
+            self.P[self.state_id] = self._distance(np.expand_dims(self.triples[self.state_id], axis=0), self.triples)
         
-        distr = self.sample_distr(logits=self.P[self.state_idx])
+        distr = self.sample_distr(logits=self.P[self.state_id])
         self.state_id = distr.sample()
 
         return self.state_id

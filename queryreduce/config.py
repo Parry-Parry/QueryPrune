@@ -10,6 +10,13 @@ class EmbedConfig(NamedTuple):
     model : Any
     dataset : Any
 
+class MarkovConfig(NamedTuple):
+    alpha : Any
+    beta : Any
+    triples : Any
+    distr : Any
+    gpu : Any
+
 ### General Structures ###
 
 class Embedding(NamedTuple):
