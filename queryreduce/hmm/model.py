@@ -9,12 +9,15 @@ class Process:
 
     Config Parameters
     -----------------
-    n_states : int -> Number of samples that can be reached
     alpha : float -> Weight of query embedding on distance 
     beta : float -> Weight of positive document on distance
-    index : faiss.index -> Indexed samples for distance search
-    triples : List[NamedTuple] -> Set of embeddings
+    triples : np.array -> Set of embeddings of shape [num_samples, num_embeddings, embed_dim]
     distr : torch.distribution -> Some categorical distribution
+
+    Generated Parameters
+    --------------------
+    P : np.array -> Generate from the number of triples, represents the transition probability matrix 
+    distance : func -> Function to calculate a pairwise distance across queries and documents
 
     run() Parameters
     ----------------
