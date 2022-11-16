@@ -75,6 +75,17 @@ class find_knn:
     def query(self, queries, k):
         return self.index.search(queries, k)
 
+def init_distance(alpha, beta, equal=False):
+    gamma = 1 - alpha - beta
+    if gamma < 0: gamma = 0
+    if equal:
+        alpha, beta, gamma = 1, 1, 1
+
+    norm = lambda x, y : np.linalg.norm(y - x)
+    def distance(t1, t2):
+        return alpha * norm(t1.q, t2.q) + beta * norm(t1.d1, t2.d1) + gamma * norm(t1.d2, t2.d2)
+
+    return distance
 
 
 

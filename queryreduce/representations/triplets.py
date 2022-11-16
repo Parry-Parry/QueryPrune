@@ -3,6 +3,10 @@ from queryreduce.utils.config import EmbedConfig, Embedding, Triplet
 from torch.nn import tensor
 import numpy as np
 
+'''
+Retrieve text associated with triplets of IDs, generate embeddings and return tuples
+'''
+
 class EmbeddingWrapper():
     def __init__(self, config : EmbedConfig, **kwargs) -> None:
         self.model = config.model
@@ -20,14 +24,14 @@ class EmbeddingWrapper():
         txt = self._retrieve(id, is_q)
         tok, mask = self.tokenizer(txt) 
         embedding = self.model.doc(tok, mask) if not is_q else self.model.query(tok, mask)
-        return Embedding(embedding, id)
+        return embedding
 
     def create_triplet(self, qid : Union[int, str], dposid : Union[int, str], dnegid : Union[int, str]) -> Triplet:
         q = self._embed(qid, True)
         d_pos = self._embed(dposid, False)
         d_neg = self._embed(dnegid, False)
 
-        return Triplet(q, d_pos, d_neg)
+        return Triplet(qid, q, d_pos, d_neg)
     
     def get_docs(self, ids : list) -> list:
         return self.store.get_many(ids)
