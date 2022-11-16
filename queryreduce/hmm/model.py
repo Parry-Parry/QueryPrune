@@ -24,21 +24,18 @@ class Process:
 
     state_id = 0
     def __init__(self, config) -> None:
-        self.P = np.zeros((config.n_states, config.n_states), dtype=np.float16)
-        self.distance = init_distance(config.alpha, config.beta)
-        self.index = config.index
+        self.P = np.zeros((config.triple.shape[0], config.triple.shape[0]), dtype=np.float16)
+        self.distance = init_distance(config.gpu, config.alpha, config.beta)
         self.triples = config.triples
         self.sample_distr = config.distr
 
-    def _distance(self, x, y):
-        return np.exp(self.distance(x, y)**2)
+    def _distance(self, x, xs):
+        return np.exp(self.distance(x, xs)**2)
     
     def _step(self):
         if np.all(self.P[self.state_id] == 0):
             triple = self.triples[self.state_idx]
-            dist = partial(self._distance, triple)
-            logits = np.array(list(map(dist, self.triples)))
-            self.P[self.state_idx] = logits
+            self.P[self.state_idx] = self._distance(triple, self.triples)
         
         distr = self.sample_distr(logits=self.P[self.state_idx])
         self.state_id = distr.sample()

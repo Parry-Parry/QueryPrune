@@ -1,6 +1,7 @@
 from typing import Tuple
 from queryreduce.utils.config import Text, TextSet
 import faiss
+from functools import partial
 import numpy as np 
 
 '''
@@ -60,7 +61,7 @@ class find_knn:
         self.d = x.shape[1]
 
         if ngpu is None:
-            self.index = faiss.IndexFlatL2(d)
+            self.index = faiss.IndexFlatL2(self.d)
         else:
             cfg = faiss.GpuIndexFlatConfig()
             cfg.useFloat16 = False
@@ -75,15 +76,15 @@ class find_knn:
     def query(self, queries, k):
         return self.index.search(queries, k)
 
-def init_distance(alpha, beta, equal=False):
+def init_distance(resource, alpha, beta, equal=False):
     gamma = 1 - alpha - beta
     if gamma < 0: gamma = 0
     if equal:
         alpha, beta, gamma = 1, 1, 1
 
-    norm = lambda x, y : np.linalg.norm(y - x)
-    def distance(t1, t2):
-        return alpha * norm(t1.q, t2.q) + beta * norm(t1.d1, t2.d1) + gamma * norm(t1.d2, t2.d2)
+    norm = partial(faiss.pairwise_distance_gpu, resource)
+    def distance(x, xs):
+        return alpha * norm(x[:, 0], xs[:, 0]) + beta * norm(x[:, 1], xs[:, 1]) + gamma * norm(x[:, 2], xs[:, 2])
 
     return distance
 

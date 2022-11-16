@@ -4,6 +4,5 @@ class HMMconfig(NamedTuple):
     n_states : int 
     alpha : Any
     beta : Any
-    index : Any
     triples : Any
     distr : Any
