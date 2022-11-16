@@ -1,5 +1,5 @@
 import numpy as np
-from queryreduce.distance.distance import init_distance 
+from queryreduce.distance.distance import init_interpolated_distance 
 import torch 
 from functools import partial
 
@@ -28,7 +28,7 @@ class Process:
     state_id = 0
     def __init__(self, config) -> None:
         self.P = np.zeros((config.triple.shape[0], config.triple.shape[0]), dtype=np.float16)
-        self.distance = init_distance(config.gpu, config.alpha, config.beta)
+        self.distance = init_interpolated_distance(config.gpu, config.alpha, config.beta)
         self.triples = config.triples
         self.sample_distr = config.distr
 
