@@ -3,9 +3,9 @@ from queryreduce.distance.distance import init_distance
 import torch 
 from functools import partial
 
-class HMM:
+class Process:
     '''
-    HMM with single ergodic class
+    Markov Process with single ergodic class
 
     Config Parameters
     -----------------
