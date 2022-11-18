@@ -1,4 +1,4 @@
-from queryreduce.distance.distance import cluster_queries
+from queryreduce.distance import cluster_queries
 from representations.triplets import * 
 import argparse 
 import ir_datasets

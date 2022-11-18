@@ -1,5 +1,5 @@
 from typing import Any, Union, NamedTuple
-from queryreduce.utils.config import EmbedConfig, Embedding, Triplet
+from queryreduce.config import EmbedConfig, Embedding, Triplet
 from torch.nn import tensor
 import numpy as np
 

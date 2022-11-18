@@ -33,12 +33,12 @@ class Process:
         self.triples = config.triples
         self.sample_distr = config.distr
 
-    def _distance(self, x, xs):
+    def _weight(self, x, xs):
         return np.exp(self.distance(x, xs)**2)
     
     def _step(self):
         if np.all(self.P[self.state_id] == 0):
-            self.P[self.state_id] = self._distance(np.expand_dims(self.triples[self.state_id], axis=0), self.triples)
+            self.P[self.state_id] = self._weight(np.expand_dims(self.triples[self.state_id], axis=0), self.triples)
         
         distr = self.sample_distr(logits=self.P[self.state_id])
         self.state_id = distr.sample()
