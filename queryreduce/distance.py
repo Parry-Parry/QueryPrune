@@ -41,12 +41,15 @@ def init_interpolated_similarity(resource, alpha, beta, equal=False, METRIC=None
     dist = lambda x, y : faiss.pairwise_distance_gpu(resource, norm(x), norm(y), metric=METRIC) 
 
     def distance(x, xs):
+        x = x.reshape()
         q = alpha * dist(x[:, 0], xs[:, 0])
         pos = beta * dist(x[:, 1], xs[:, 1])
         neg = gamma * dist(x[:, 2], xs[:, 2])
         return q + pos + neg
 
     return distance
+
+
 
 
 

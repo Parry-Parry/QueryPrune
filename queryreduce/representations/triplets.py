@@ -1,41 +1,33 @@
-from typing import Any, Union, NamedTuple
-from queryreduce.config import EmbedConfig, Embedding, Triplet
-from torch.nn import tensor
+from typing import Any, List, Union, NamedTuple
+from queryreduce.config import EmbedConfig, Triplet
 import numpy as np
+import pandas as pd
+from pandas.io.parsers import TextFileReader
+from sentence_transformers import SentenceTransformer
+import pickle
 
 '''
 Retrieve text associated with triplets of IDs, generate embeddings and return tuples
 '''
 
-class EmbeddingWrapper():
-    def __init__(self, config : EmbedConfig, **kwargs) -> None:
-        self.model = config.model
-        self.tokenizer = config.tokenizer
+class VectorFactory:
+    def __init__(self, model : str, **kwargs) -> None:
+        self.model = SentenceTransformer(model)
 
-        self.dataset = config.dataset 
-        self.store = config.dataset.doc_store()
-        self.queries = [query for query in config.dataset.queries_iter()]
-        self.q_ids = [query.id for query in self.queries]
-    
-    def _retrieve(self, id : Union[int, str], is_q):
-        return self.store.get(id) if not is_q else self.queries[self.q_ids.index(id)]
+    ### BATCHED OP ###
+    def _batch_encode(self, txt : List[str]) -> np.array:
+        return self.model.encode(txt, convert_to_numpy=True)
+    def _batch_create(self, triples : pd.DataFrame):
+        e_q = self._batch_encode(triples['qid'].to_list())
+        e_pos = self._batch_encode(triples['pid+'].to_list())
+        e_neg = self._batch_encode(triples['pid-'].to_list())
 
-    def _embed(self, id : Union[int, str], is_q : bool =False) -> tensor:
-        txt = self._retrieve(id, is_q)
-        tok, mask = self.tokenizer(txt) 
-        embedding = self.model.doc(tok, mask) if not is_q else self.model.query(tok, mask)
-        return embedding
+        batch = np.stack([e_q, e_pos, e_neg], axis=1)
 
-    def create_triplet(self, qid : Union[int, str], dposid : Union[int, str], dnegid : Union[int, str]) -> Triplet:
-        q = self._embed(qid, True)
-        d_pos = self._embed(dposid, False)
-        d_neg = self._embed(dnegid, False)
+        return batch.reshape((batch.shape[0], -1))
 
-        return Triplet(qid, q, d_pos, d_neg)
-    
-    def get_docs(self, ids : list) -> list:
-        return self.store.get_many(ids)
-    
-    def get_queries(self, qids : list) -> list:
-        return [self.queries[self.q_ids.index(id)] for id in qids]
+    def run(self, triples : TextFileReader, out : str):
+        batches = [self._batch_create(chunk) for chunk in triples]
+        with open(out, 'wb') as f:
+            pickle.dump(np.stack(batches, axis=0), f)
     

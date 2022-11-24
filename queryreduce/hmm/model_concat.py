@@ -13,7 +13,7 @@ class Process:
     -----------------
     alpha : float -> Weight of query embedding on distance 
     beta : float -> Weight of positive document on distance
-    triples : np.array -> Set of embeddings of shape [num_samples, num_embeddings, embed_dim]
+    triples : np.array -> Set of embeddings of shape [num_samples, num_embeddings * embed_dim]
     *Not Used Currently* distr : torch.distribution -> Some categorical distribution
 
     Generated Parameters
@@ -50,10 +50,10 @@ class Process:
     def run(self, x0, k):
         self.state_id = x0
         t = 0 
-        idx = []
+        idx = set()
         while len(idx) < k:
             candidate = self._step()
-            if candidate not in idx: idx.append(candidate)
+            if candidate not in idx: idx.add(candidate)
             t += 1
         
         return np.array(idx), t

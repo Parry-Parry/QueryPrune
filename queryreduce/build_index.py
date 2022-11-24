@@ -2,40 +2,31 @@ from queryreduce.distance import cluster_queries
 from representations.triplets import * 
 import argparse 
 import ir_datasets
+import logging
 
 parser = argparse.ArgumentParser(description='Construct embedding clusters from triplets of IDs')
 
-parser.add_argument('-dataset', '-d', type=str, help='Dataset from which to extract triplets')
-parser.add_argument('-portion', '-p', type=int, default=100, help='How much of the dataset to parse')
-parser.add_argument('-out', '-o', type=str, help='Output dir')
-parser.add_argument('-neighbours', '-n', type=int, help='Number of Neighbours to prune')
-parser.add_argument('-epsilon', '-e', type=float, help='Threshold distance')
-parser.add_argument('-token_d', type=str, help='Document Tokenizer')
-parser.add_argument('-pretrain', help='Train model on portion')
+parser.add_argument('-dataset', '-d', type=str, help='Directory of Triples tsv')
+parser.add_argument('-model', type=str, help='Name of Model Checkpoint for indexing [Sentence Transformer Compatible]')
+parser.add_argument('-batch_size', type=int, help='Batch Size')
+parser.add_argument('-out', type=str, help='Output file')
 
 
-args = parser.parse_args()
+def main(args):
+    cols = ['qid', 'pid+', 'pid-']
+    types = {str for col in cols}
+    logging.info('Reading Dataset...')
+    with open(args.dataset, 'r') as f:
+        iterator_df = pd.read_csv(f, sep='\t', header=None, index_col=False, names=cols, dtype=types, chunksize=args.batch_size)
 
-dataset = ir_datasets.load(args.dataset)
-out_dir = args.out 
-
-model = None
-
-config = EmbedConfig(
-    tokenizer=None,
-    model=model,
-    dataset=dataset
-)
-
-lookup = EmbeddingWrapper(config)
-
-if not dataset.has_docpairs():
-    print(f"Dataset {args.dataset} does not have doc pairs to parse! EXITING...")
-    exit 
-
-triplets = [lookup.create_triplet(pair.query_id, pair.doc_id_a, pair.doc_id_b) for pair in dataset.doc_pairs_iter() ]
-
-labels = cluster_queries(triplets, args.k)
+    logging.info('Running Vector Factory')
+    factory = VectorFactory(args.model)
+    factory.run(iterator_df, args.out)
+    logging.info('Completed Successfully')
+    
+if __name__ == '__main__':
+    logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
+    main(parser.parse_args())
 
 
 
