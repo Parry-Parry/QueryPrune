@@ -14,7 +14,7 @@ parser.add_argument('-out', type=str, help='Output file')
 
 def main(args):
     cols = ['qid', 'pid+', 'pid-']
-    types = {str for col in cols}
+    types = {col : str for col in cols}
     logging.info('Reading Dataset...')
     with open(args.dataset, 'r') as f:
         iterator_df = pd.read_csv(f, sep='\t', header=None, index_col=False, names=cols, dtype=types, chunksize=args.batch_size)
@@ -23,7 +23,7 @@ def main(args):
     factory = VectorFactory(args.model)
     factory.run(iterator_df, args.out)
     logging.info('Completed Successfully')
-    
+
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
     main(parser.parse_args())
