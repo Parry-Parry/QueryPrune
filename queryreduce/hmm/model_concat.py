@@ -4,6 +4,8 @@ import numpy as np
 from queryreduce.config import MarkovConfig
 from queryreduce.utils.utils import weight
 import faiss
+import logging
+import time
 
 class Process:
     '''
@@ -42,9 +44,10 @@ class Process:
     def _build_index(self, triples : np.array, k : int):
         ngpus = faiss.get_num_gpus()
         if ngpus < 1:
-            print("Error! Faiss Indexing Requires GPU, Exiting...")
+            logging.error("Error! Faiss Indexing Requires GPU, Exiting...")
             exit
 
+        logging.info('Building Index')
         faiss.normalize_L2(triples)
         quantiser = faiss.IndexFlatL2(self.prob_dim) 
         cpu_index = faiss.IndexIVFFlat(quantiser, self.prob_dim, k, faiss.METRIC_INNER_PRODUCT)
@@ -81,9 +84,23 @@ class Process:
         self.state_id = x0
         t = 0 
         idx = set()
+        logging.info(f'Retrieving {k} candidates with starting id: {x0}')
+        start = time.time()
         while len(idx) < k:
             candidate = self._step()
             if candidate not in idx: idx.add(candidate)
             t += 1
-        
+        end = time.time() 
+
+        seconds = end - start 
+        minutes = seconds / 60
+        hours = minutes / 60 
+
+        if hours > 1:
+            logging.info(f'Completed search in {hours} hours with {t} steps')
+        elif minutes > 1:
+            logging.info(f'Completed search in {minutes} minutes with {t} steps')
+        else:
+            logging.info(f'Completed search in {seconds} seconds with {t} steps')
+
         return np.array(idx), t
