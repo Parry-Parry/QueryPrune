@@ -1,4 +1,4 @@
-from ..representation import VectorFactory
+from queryreduce.representation import VectorFactory
 import argparse 
 import logging
 import pandas as pd
