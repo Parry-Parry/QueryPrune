@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser(description='Construct embedding clusters from 
 parser.add_argument('-dataset', '-d', type=str, help='Directory of Triples tsv')
 parser.add_argument('-model', type=str, help='Name of Model Checkpoint for indexing [Sentence Transformer Compatible]')
 parser.add_argument('-batch_size', type=int, help='Batch Size')
-parser.add_argument('-out', type=str, help='Output file')
+parser.add_argument('-out', type=str, help='Output file [TSV]')
 
 
 def main(args):
