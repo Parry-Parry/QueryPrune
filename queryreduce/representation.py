@@ -1,5 +1,4 @@
-from typing import Any, List, Union, NamedTuple
-from queryreduce.config import EmbedConfig, Triplet
+from typing import Any, List
 import numpy as np
 import pandas as pd
 from pandas.io.parsers import TextFileReader

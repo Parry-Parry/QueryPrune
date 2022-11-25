@@ -1,8 +1,7 @@
-from queryreduce.distance import cluster_queries
-from representations.triplets import * 
+from representation import VectorFactory
 import argparse 
-import ir_datasets
 import logging
+import pandas as pd
 
 parser = argparse.ArgumentParser(description='Construct embedding clusters from triplets of IDs')
 
@@ -19,7 +18,7 @@ def main(args):
     with open(args.dataset, 'r') as f:
         iterator_df = pd.read_csv(f, sep='\t', header=None, index_col=False, names=cols, dtype=types, chunksize=args.batch_size)
 
-    logging.info('Running Vector Factory')
+    logging.info('Running Vector Factory on model {args.model} with batch size {args.batch_size}')
     factory = VectorFactory(args.model)
     factory.run(iterator_df, args.out)
     logging.info('Completed Successfully')

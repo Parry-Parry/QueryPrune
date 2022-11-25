@@ -1,8 +1,8 @@
 from collections import defaultdict
 from typing import Dict
 import numpy as np
-from queryreduce.distance import init_interpolated_similarity
 from queryreduce.config import MarkovConfig
+from queryreduce.utils.utils import weight
 import faiss
 
 class Process:
@@ -13,13 +13,17 @@ class Process:
     -----------------
     alpha : float -> Weight of query embedding on distance 
     beta : float -> Weight of positive document on distance
+    equal : bool -> If True apply no weighting to embedding space
+    dim : int -> dimensionality of single embedding
+    k : int -> number of clusters in Index
+    n : int -> n-nearest neighbours in similarity search 
     triples : np.array -> Set of embeddings of shape [num_samples, num_embeddings * embed_dim]
-    *Not Used Currently* distr : torch.distribution -> Some categorical distribution
 
     Generated Parameters
     --------------------
     P : dict[np.array] -> Represents the transition probability matrix 
-    distance : func -> Function to calculate a pairwise distance across queries and documents
+    prob_dim : int -> Derived from 3 * embed dim
+    index : faiss.index -> Cosine Similarity Search
 
     run() Parameters
     ----------------
@@ -29,19 +33,45 @@ class Process:
 
     state_id = 0
     def __init__(self, config : MarkovConfig) -> None:
-        self.triples = config.triples
+        self.triples = weight(config.triples, config.dim, config.alpha, config.beta, config.equal)
         self.P : Dict[int, np.array] = defaultdict(lambda : np.zeros(self.triples.shape[0]))
-        self.distance = init_interpolated_similarity(config.gpu, config.alpha, config.beta, config.equal)
+        self.prob_dim = 3 * config.dim
+        self.index = self._build_index(self.triples, config.k)
+        self.n = config.n
     
-        #self.sample_distr = config.distr
+    def _build_index(self, triples : np.array, k : int):
+        ngpus = faiss.get_num_gpus()
+        if ngpus < 1:
+            print("Error! Faiss Indexing Requires GPU, Exiting...")
+            exit
 
-    def _weight(self, x, xs):
-        return np.exp(-(self.distance(x, xs)**2))
+        faiss.normalize_L2(triples)
+        quantiser = faiss.IndexFlatL2(self.prob_dim) 
+        cpu_index = faiss.IndexIVFFlat(quantiser, self.prob_dim, k, faiss.METRIC_INNER_PRODUCT)
+        cpu_index.train(triples)
+
+        if ngpus > 1:
+            index = faiss.index_cpu_to_all_gpus(cpu_index)
+        else:
+            res = faiss.StandardGpuResources() 
+            index = faiss.index_cpu_to_gpu(res, 0, cpu_index)
+        index.add(triples)
+        return index
+
+    def _distance(self, x):
+        return self.index.search(-x, self.n)
+
+    def _weight(self, x):
+        tmp_prob = np.zeros(self.prob_dim, dtype=np.float32)
+        D, I = self._distance(x)
+        gaussian_distance = np.exp(-np.square(D))
+        tmp_prob[I] = gaussian_distance / np.linalg.norm(gaussian_distance)
+
+        return tmp_prob
     
     def _step(self):
         if np.all(self.P[self.state_id] == 0):
-            self.P[self.state_id] = self._weight(np.expand_dims(self.triples[self.state_id], axis=0), self.triples)
-            faiss.normalize_L2(self.P[self.state_id])
+            self.P[self.state_id] = self._weight(np.expand_dims(self.triples[self.state_id], axis=0))
         
         self.state_id = np.random.choice(self.P[self.state_id], 1, p=self.P[self.state_id])
 
