@@ -44,10 +44,10 @@ def main(args):
     cols = ['qid', 'pid+', 'pid-']
     types = {col : str for col in cols}
     logging.info('Reading Dataset...')
-    with open(args.dataset, 'r') as f:
-        iterator_df = pd.read_csv(f, sep='\t', header=None, index_col=False, names=cols, dtype=types, chunksize=args.batch_size)
+    
+    iterator_df = pd.read_csv(args.dataset, sep='\t', header=None, index_col=False, names=cols, dtype=types, chunksize=args.batch_size)
 
-    logging.info('Running Vector Factory on model {args.model} with batch size {args.batch_size}')
+    logging.info(f'Running Vector Factory on model {args.model} with batch size {args.batch_size}')
     factory = VectorFactory(args.model)
     factory.run(iterator_df, args.out)
     logging.info('Completed Successfully')
