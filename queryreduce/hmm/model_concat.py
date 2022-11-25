@@ -36,7 +36,7 @@ class Process:
     state_id = 0
     def __init__(self, config : MarkovConfig) -> None:
         self.triples = weight(config.triples, config.dim, config.alpha, config.beta, config.equal)
-        self.P : Dict[int, Tuple[np.array, np.array]] = defaultdict(lambda : np.zeros(self.triples.shape[0]))
+        self.P : Dict[int, Tuple[np.array, np.array]] = defaultdict(lambda : (np.zeros(config.n), np.zeros(config.n)))
         self.prob_dim = 3 * config.dim
         self.index = self._build_index(self.triples, config.k)
         self.n = config.n
@@ -72,7 +72,7 @@ class Process:
         return probs, I
     
     def _step(self):
-        if np.all(self.P[self.state_id] == 0):
+        if np.all(self.P[self.state_id][0] == 0):
             probs, I = self._weight(np.expand_dims(self.triples[self.state_id], axis=0))
             self.P[self.state_id] = (probs, I)
         
