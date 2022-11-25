@@ -1,4 +1,4 @@
-from representation import VectorFactory
+from ..representation import VectorFactory
 import argparse 
 import logging
 import pandas as pd
@@ -26,13 +26,3 @@ def main(args):
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
     main(parser.parse_args())
-
-
-
-
-
-
-
-
-
-
