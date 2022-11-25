@@ -30,7 +30,7 @@ class VectorFactory:
     def run(self, triples : TextFileReader, out : str, compresslevel=9):
         batches = [self._batch_create(chunk) for chunk in triples]
         with bz2.BZ2File(out, 'wb', compresslevel=compresslevel) as f:
-            pickle.dump(np.stack(batches, axis=0), f)
+            pickle.dump(np.concat(batches, axis=0), f)
 
 parser = argparse.ArgumentParser(description='Construct embedding clusters from triplets of IDs')
 
