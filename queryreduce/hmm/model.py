@@ -38,17 +38,17 @@ class Process:
         self.triples = weight(config.triples, config.dim, config.alpha, config.beta, config.equal)
         self.P : Dict[int, Tuple[np.array, np.array]] = defaultdict(lambda : (np.zeros(config.n), np.zeros(config.n)))
         self.prob_dim = 3 * config.dim
-        self.index = self._build_index(self.triples, config.k, config.index) if not config.built else self._load_index(config.index)
+        self.index = self._build_index(self.triples, config.k, config.store) if not config.built else self._load_index(config.store, config.k)
         self.n = config.n
     
-    def _load_index(self, store : str):
+    def _load_index(self, store : str, k : int):
         assert store is not None
         ngpus = faiss.get_num_gpus()
         if ngpus < 1:
             logging.error("Error! Faiss Indexing Requires GPU, Exiting...")
             exit
 
-        cpu_index = faiss.read_index(store)
+        cpu_index = faiss.read_index(store + f'triples.{k}.index')
         if ngpus > 1:
             index = faiss.index_cpu_to_all_gpus(cpu_index)
         else:

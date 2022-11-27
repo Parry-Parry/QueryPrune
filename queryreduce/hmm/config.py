@@ -1,8 +1,15 @@
-from typing import Any, Union, NamedTuple
+from typing import Any, NamedTuple
 
 class MarkovConfig(NamedTuple):
-    alpha : Any
-    beta : Any
     triples : Any
-    distr : Any
-    gpu : Any
+    dim : int
+    alpha : float
+    beta : float
+    equal : bool
+    n : int
+    k : int 
+    store : str 
+    built : bool
+
+    
+    
