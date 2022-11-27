@@ -64,7 +64,7 @@ class Process:
             logging.error("Error! Faiss Indexing Requires GPU, Exiting...")
             exit
 
-        logging.info('Building Index')
+        logging.info('Building Index...')
 
         faiss.normalize_L2(triples)
         quantiser = faiss.IndexFlatL2(self.prob_dim) 
@@ -72,7 +72,8 @@ class Process:
         cpu_index.train(triples)
         cpu_index.add(triples)
 
-        faiss.write_index(cpu_index, store)
+        logging.info('Storing Index to Disk...')
+        faiss.write_index(cpu_index, store + f'triples.{k}.index')
 
         if ngpus > 1:
             index = faiss.index_cpu_to_all_gpus(cpu_index)
