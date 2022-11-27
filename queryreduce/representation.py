@@ -27,6 +27,5 @@ class VectorFactory:
 
     def run(self, triples : TextFileReader, out : str, compresslevel=9):
         batches = [self._batch_create(chunk) for chunk in triples]
-        with bz2.BZ2File(out, 'rb', compresslevel=compresslevel) as f:
-            pickle.dump(np.stack(batches, axis=0), f)
-    
+        with bz2.BZ2File(out, 'wb', compresslevel=compresslevel) as f:
+            pickle.dump(np.concatenate(batches, axis=0), f)
