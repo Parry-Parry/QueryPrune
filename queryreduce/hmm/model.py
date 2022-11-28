@@ -38,8 +38,13 @@ class Process:
         self.triples = weight(config.triples, config.dim, config.alpha, config.beta, config.equal)
         self.P : Dict[int, Tuple[np.array, np.array]] = defaultdict(lambda : (np.zeros(config.n), np.zeros(config.n)))
         self.prob_dim = 3 * config.dim
+        self.nprobe = config.nprobe
         self.index = self._build_index(self.triples, config.k, config.store) if not config.built else self._load_index(config.store, config.k)
         self.n = config.n
+    
+    def set_nprobe(self, nprobe):
+        self.nprobe = nprobe 
+        self.index.nprobe = nprobe
     
     def _load_index(self, store : str, k : int):
         assert store is not None
@@ -54,6 +59,8 @@ class Process:
         else:
             res = faiss.StandardGpuResources() 
             index = faiss.index_cpu_to_gpu(res, 0, cpu_index)
+        
+        index.nprobe = self.nprobe
             
         return index
     
@@ -79,6 +86,8 @@ class Process:
         else:
             res = faiss.StandardGpuResources() 
             index = faiss.index_cpu_to_gpu(res, 0, cpu_index)
+        
+        index.nprobe = self.nprobe
 
         return index
 

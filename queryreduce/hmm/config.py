@@ -9,6 +9,7 @@ class MarkovConfig(NamedTuple):
     n : int
     k : int 
     store : str 
+    nprobe : int
     built : bool
 
     
