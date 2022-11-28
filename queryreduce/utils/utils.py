@@ -10,7 +10,9 @@ Assumes:
 '''
 
 def weight(array : np.array, dim : int, alpha : float, beta : float, equal : bool) -> np.array:
+    
     if equal: 
+        faiss.normalize_L2(array)
         return array
 
     gamma = np.max(1 - alpha - beta, 0)
@@ -18,7 +20,7 @@ def weight(array : np.array, dim : int, alpha : float, beta : float, equal : boo
     array[:, :dim] = alpha * array[:, :dim]
     array[:, dim:2*dim] = beta * array[:, dim:2*dim]
     array[:, 2*dim:3*dim] = gamma * array[:, 2*dim:3*dim]
-
+    faiss.normalize_L2(array)
     return array
 
 

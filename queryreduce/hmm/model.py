@@ -19,7 +19,7 @@ class Process:
     dim : int -> dimensionality of single embedding
     k : int -> number of clusters in Index
     n : int -> n-nearest neighbours in similarity search 
-    triples : np.array -> Set of embeddings of shape [num_samples, num_embeddings * embed_dim]
+    triples : np.array -> Set of embeddings of shape [num_samples, num_embeddings * embed_dim] **NORMALISED**
 
     Generated Parameters
     --------------------
@@ -66,7 +66,6 @@ class Process:
 
         logging.info('Building Index...')
 
-        faiss.normalize_L2(triples)
         quantiser = faiss.IndexFlatL2(self.prob_dim) 
         cpu_index = faiss.IndexIVFFlat(quantiser, self.prob_dim, k, faiss.METRIC_INNER_PRODUCT)
         cpu_index.train(triples)
@@ -110,8 +109,7 @@ class Process:
         logging.info(f'Retrieving {k} candidates with starting id: {x0}')
         start = time.time()
         while len(idx) < k:
-            candidate = self._step()
-            if candidate not in idx: idx.add(candidate)
+            idx.add(self._step())
             t += 1
         end = time.time() 
 

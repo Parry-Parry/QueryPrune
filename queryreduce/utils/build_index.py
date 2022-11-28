@@ -9,6 +9,9 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('-source', type=str)
 parser.add_argument('-k', type=int)
+parser.add_argument('-eq')
+parser.add_argument('-alpha', type=float)
+parser.add_argument('-beta', type=float)
 parser.add_argument('-out', type=str) 
 
 def main(args):
@@ -16,12 +19,14 @@ def main(args):
         triples = pickle.load(f)
     prob_dim = triples.shape[-1]
 
+
+
     ngpus = faiss.get_num_gpus()
     if ngpus < 1:
         logging.error("Error! Faiss Indexing Requires GPU, Exiting...")
         return 1
 
-    logging.info('Building Index')
+    logging.info('Training Index')
 
     faiss.normalize_L2(triples)
     quantiser = faiss.IndexFlatL2(prob_dim) 
