@@ -79,13 +79,6 @@ class Process:
         ngpus = faiss.get_num_gpus()
 
         index = faiss.read_index(store + f'triples.{k}.index')
-        '''
-        if ngpus > 1:
-            index = faiss.index_cpu_to_all_gpus(cpu_index)
-        else:
-            res = faiss.StandardGpuResources() 
-            index = faiss.index_cpu_to_gpu(res, 0, cpu_index)
-        '''
         index.nprobe = self.nprobe
             
         return index
@@ -100,18 +93,12 @@ class Process:
         logging.info('Building Index...')
 
         quantiser = faiss.IndexFlatL2(self.prob_dim) 
-        cpu_index = faiss.IndexIVFFlat(quantiser, self.prob_dim, k, faiss.METRIC_INNER_PRODUCT)
-        cpu_index.train(triples)
-        cpu_index.add(triples)
+        index = faiss.IndexIVFFlat(quantiser, self.prob_dim, k, faiss.METRIC_INNER_PRODUCT)
+        index.train(triples)
+        index.add(triples)
 
         logging.info('Storing Index to Disk...')
-        faiss.write_index(cpu_index, store + f'triples.{k}.index')
-
-        if ngpus > 1:
-            index = faiss.index_cpu_to_all_gpus(cpu_index)
-        else:
-            res = faiss.StandardGpuResources() 
-            index = faiss.index_cpu_to_gpu(res, 0, cpu_index)
+        faiss.write_index(index, store + f'triples.{k}.index')
         
         index.nprobe = self.nprobe
 
@@ -125,7 +112,7 @@ class Process:
         gaussian_distance = np.exp(-np.square(D))
         probs = gaussian_distance / np.linalg.norm(gaussian_distance)
 
-        return probs, I
+        return np.flatten(probs), np.flatten(I)
     
     def _step(self):
         if np.all(self.P[self.state_id][0] == 0):
