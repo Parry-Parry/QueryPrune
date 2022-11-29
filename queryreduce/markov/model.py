@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Dict, Tuple
 import numpy as np
-from queryreduce.config import MarkovConfig
+from queryreduce.markov.config import MarkovConfig
 from queryreduce.utils.utils import weight
 import faiss
 import logging

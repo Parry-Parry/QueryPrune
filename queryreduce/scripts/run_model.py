@@ -1,5 +1,5 @@
-from queryreduce.hmm.model import Process
-from queryreduce.hmm.config import MarkovConfig
+from queryreduce.markov.model import Process
+from queryreduce.markov.config import MarkovConfig
 import numpy as np 
 import argparse
 import logging 
