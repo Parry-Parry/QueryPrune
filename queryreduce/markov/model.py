@@ -53,13 +53,14 @@ class Process:
             logging.error("Error! Faiss Indexing Requires GPU, Exiting...")
             exit
 
-        cpu_index = faiss.read_index(store + f'triples.{k}.index')
+        index = faiss.read_index(store + f'triples.{k}.index')
+        '''
         if ngpus > 1:
             index = faiss.index_cpu_to_all_gpus(cpu_index)
         else:
             res = faiss.StandardGpuResources() 
             index = faiss.index_cpu_to_gpu(res, 0, cpu_index)
-        
+        '''
         index.nprobe = self.nprobe
             
         return index
@@ -67,9 +68,6 @@ class Process:
     def _build_index(self, triples : np.array, k : int, store : str):
         assert store is not None
         ngpus = faiss.get_num_gpus()
-        if ngpus < 1:
-            logging.error("Error! Faiss Indexing Requires GPU, Exiting...")
-            exit
 
         logging.info('Building Index...')
 
