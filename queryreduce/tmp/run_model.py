@@ -64,11 +64,15 @@ class Process:
     state_id = 0
     def __init__(self, config : MarkovConfig) -> None:
         self.triples = weight(config.triples, config.dim, config.alpha, config.beta, config.equal)
-        self.P : Dict[int, Tuple[np.array, np.array]] = defaultdict(lambda : (np.zeros(config.n), np.zeros(config.n)))
+        self.P : Dict[int, np.array, np.array] = defaultdict(lambda : np.zeros(config.n))
         self.prob_dim = 3 * config.dim
         self.nprobe = config.nprobe
-        self.index = self._build_index(self.triples, config.k, config.store) if not config.built else self._load_index(config.store, config.k)
+        self.index = self._build_index(config.triples, config.k, config.store) if not config.built else self._load_index(config.store, config.k)
         self.n = config.n
+        if faiss.get_num_gpus() > 0 and config.n > 2048:
+            logging.info('Using GPU, capping neighbours at 2048')
+            self.n = np.min(2048, self.n)
+
     
     def set_nprobe(self, nprobe):
         self.nprobe = nprobe 
@@ -80,15 +84,18 @@ class Process:
 
         index = faiss.read_index(store + f'triples.{k}.index')
         index.nprobe = self.nprobe
+
+        if ngpus == 1:
+            res = faiss.StandardGpuResources() 
+            index = faiss.index_cpu_to_gpu(res, 0, index)
+        elif ngpus > 1:
+            index = faiss.index_cpu_to_all_gpus(index)
             
         return index
     
     def _build_index(self, triples : np.array, k : int, store : str):
         assert store is not None
         ngpus = faiss.get_num_gpus()
-        if ngpus < 1:
-            logging.error("Error! Faiss Indexing Requires GPU, Exiting...")
-            exit
 
         logging.info('Building Index...')
 
@@ -102,27 +109,24 @@ class Process:
         
         index.nprobe = self.nprobe
 
+        if ngpus == 1:
+            res = faiss.StandardGpuResources() 
+            index = faiss.index_cpu_to_gpu(res, 0, index)
+        elif ngpus > 1:
+            index = faiss.index_cpu_to_all_gpus(index)
+
         return index
 
     def _distance(self, x):
         return self.index.search(-x, self.n)
-
-    def _weight(self, x):
-        D, I = self._distance(x)
-        print(f'D Shape: {D.shape}, I Shape: {I.shape}')
-        gaussian_distance = np.exp(-np.square(D))
-        probs = gaussian_distance / np.linalg.norm(gaussian_distance)
-
-        print(f'Probs Array: {probs}, Probs Sum: {np.sum(probs)}')
-        return probs.flatten(), I.flatten()
     
     def _step(self):
-        if np.all(self.P[self.state_id][0] == 0):
-            probs, I = self._weight(np.expand_dims(self.triples[self.state_id], axis=0))
-            self.P[self.state_id] = (probs, I)
+        if np.all(self.P[self.state_id] == 0):
+            _, I = self._distance(np.expand_dims(self.triples[self.state_id], axis=0))
+            self.P[self.state_id] = I.flatten()
         
-        probs, I = self.P[self.state_id]    
-        self.state_id = np.random.choice(I, 1, p=probs)
+        I = self.P[self.state_id]    
+        self.state_id = np.random.choice(I, 1)
 
         return self.state_id
     
@@ -148,7 +152,7 @@ class Process:
         else:
             logging.info(f'Completed search in {seconds} seconds with {t} steps')
 
-        return np.array(idx), t
+        return np.array(list(idx)), t
 
 parser = argparse.ArgumentParser()
 
