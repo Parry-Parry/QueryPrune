@@ -109,9 +109,11 @@ class Process:
 
     def _weight(self, x):
         D, I = self._distance(x)
+        print(f'D Shape: {D.shape}, I Shape: {I.shape}')
         gaussian_distance = np.exp(-np.square(D))
         probs = gaussian_distance / np.linalg.norm(gaussian_distance)
 
+        print(f'Probs Array: {probs}, Probs Sum: {np.sum(probs)}')
         return probs.flatten(), I.flatten()
     
     def _step(self):
