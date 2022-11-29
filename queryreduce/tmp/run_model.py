@@ -112,7 +112,7 @@ class Process:
         gaussian_distance = np.exp(-np.square(D))
         probs = gaussian_distance / np.linalg.norm(gaussian_distance)
 
-        return np.flatten(probs), np.flatten(I)
+        return probs.flatten(), I.flatten()
     
     def _step(self):
         if np.all(self.P[self.state_id][0] == 0):
