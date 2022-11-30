@@ -13,19 +13,17 @@ parser.add_argument('-eq')
 parser.add_argument('-alpha', type=float)
 parser.add_argument('-beta', type=float)
 parser.add_argument('-out', type=str) 
+parser.add_argument('--compress', action="store_true")
 
 def main(args):
-    with bz2.open(args.source, 'rb') as f:
-        triples = pickle.load(f)
+    if args.compress:
+        with bz2.open(args.source, 'rb') as f:
+            triples = pickle.load(f)
+    else:
+        with open(args.source, 'rb') as f:
+            triples = np.load(f)
+
     prob_dim = triples.shape[-1]
-
-
-
-    ngpus = faiss.get_num_gpus()
-    if ngpus < 1:
-        logging.error("Error! Faiss Indexing Requires GPU, Exiting...")
-        return 1
-
     logging.info('Training Index')
 
     faiss.normalize_L2(triples)
@@ -38,7 +36,6 @@ def main(args):
 
     return 0
     
-
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
