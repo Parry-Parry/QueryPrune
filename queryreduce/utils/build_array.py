@@ -3,9 +3,7 @@ import logging
 from typing import Any, List
 import numpy as np
 import pandas as pd
-from pandas.io.parsers import TextFileReader
 from queryreduce.representation import VectorFactory
-from sentence_transformers import SentenceTransformer
 import pickle
 import bz2
 

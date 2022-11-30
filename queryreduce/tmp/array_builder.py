@@ -28,7 +28,7 @@ class VectorFactory:
     def run(self, triples : TextFileReader, out : str, compresslevel=9):
         batches = [self._batch_create(chunk) for chunk in triples]
         with open(out, 'wb') as f:
-            np.save(np.concatenate(batches, axis=0), f)
+            np.save(f, np.concatenate(batches, axis=0))
 
 '''
 Retrieve text associated with triplets of IDs, generate embeddings and return tuples
