@@ -8,6 +8,18 @@ import time
 from typing import Dict, Tuple, Any, NamedTuple
 from collections import defaultdict
 
+def time_output(diff : int) -> str:
+    seconds = diff
+    minutes = seconds / 60
+    hours = minutes / 60 
+
+    if hours > 1:
+        return f'Completed search in {hours} hours'
+    elif minutes > 1:
+        return f'Completed search in {minutes} minutes'
+    else:
+        return f'Completed search in {seconds} seconds'
+
 def weight(array : np.array, dim : int, alpha : float, beta : float, equal : bool) -> np.array:
     
     if equal: 
@@ -47,7 +59,7 @@ class Process:
     dim : int -> dimensionality of single embedding
     k : int -> number of clusters in Index
     n : int -> n-nearest neighbours in similarity search 
-    triples : np.array -> Set of embeddings of shape [num_samples, num_embeddings * embed_dim] **NORMALISED**
+    triples : np.array -> Set of embeddings of shape [num_samples, num_embeddings * embed_dim] 
 
     Generated Parameters
     --------------------
@@ -74,7 +86,7 @@ class Process:
             self.n = np.min(2048, self.n)
 
     
-    def set_nprobe(self, nprobe):
+    def set_nprobe(self, nprobe : int):
         self.nprobe = nprobe 
         self.index.nprobe = nprobe
     
@@ -99,10 +111,14 @@ class Process:
 
         logging.info('Building Index...')
 
+        start = time.time()
         quantiser = faiss.IndexFlatL2(self.prob_dim) 
         index = faiss.IndexIVFFlat(quantiser, self.prob_dim, k, faiss.METRIC_INNER_PRODUCT)
         index.train(triples)
         index.add(triples)
+        end = time.time()
+
+        logging.info(time_output(end - start))
 
         logging.info('Storing Index to Disk...')
         faiss.write_index(index, store + f'triples.{k}.index')
@@ -123,7 +139,7 @@ class Process:
     def _step(self):
         if np.all(self.P[self.state_id] == 0):
             _, I = self._distance(np.expand_dims(self.triples[self.state_id], axis=0))
-            self.P[self.state_id] = I.flatten()
+            self.P[self.state_id] = I.ravel()
         
         I = self.P[self.state_id]    
         self.state_id = np.random.choice(I, 1)
@@ -141,16 +157,7 @@ class Process:
             t += 1
         end = time.time() 
 
-        seconds = end - start 
-        minutes = seconds / 60
-        hours = minutes / 60 
-
-        if hours > 1:
-            logging.info(f'Completed search in {hours} hours with {t} steps')
-        elif minutes > 1:
-            logging.info(f'Completed search in {minutes} minutes with {t} steps')
-        else:
-            logging.info(f'Completed search in {seconds} seconds with {t} steps')
+        logging.info(time_output(end - start))
 
         return np.array(list(idx)), t
 

@@ -2,6 +2,18 @@ from typing import Tuple
 import faiss
 import numpy as np 
 
+def time_output(diff : int):
+    seconds = diff
+    minutes = seconds / 60
+    hours = minutes / 60 
+
+    if hours > 1:
+        return f'Completed search in {hours} hours'
+    elif minutes > 1:
+        return f'Completed search in {minutes} minutes'
+    else:
+        return f'Completed search in {seconds} seconds'
+
 '''
 Function weights Embeddings by given hyperparameters
 
