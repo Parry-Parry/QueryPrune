@@ -139,7 +139,7 @@ class Process:
             self.P[self.state_id] = I.ravel()
         
         I = self.P[self.state_id]    
-        self.state_id = np.random.choice(I, 1)
+        self.state_id = np.random.choice(I)
 
         return self.state_id
     
