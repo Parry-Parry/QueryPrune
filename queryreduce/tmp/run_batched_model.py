@@ -40,6 +40,7 @@ class MarkovConfig(NamedTuple):
     alpha : float
     beta : float
     equal : bool
+    batch : int
     n : int
     k : int 
     store : str 
@@ -73,16 +74,16 @@ class Process:
     x0 : int -> id of starting state
     k : int -> desired number of samples
     '''
-
-    state_id = 0
     def __init__(self, config : MarkovConfig) -> None:
         self.triples = weight(config.triples, config.dim, config.alpha, config.beta, config.equal)
         self.P : Dict[int, np.array, np.array] = defaultdict(lambda : np.zeros(config.n))
+        self.batch = config.batch
         self.prob_dim = 3 * config.dim
         self.nprobe = config.nprobe
         self.ngpu = config.ngpu
         self.index = self._build_index(config.triples, config.k, config.store) if not config.built else self._load_index(config.store, config.k)
         self.n = config.n
+        self.state_idx = np.zeros(config.batch)
         if self.ngpu > 0:
             logging.info('Using GPU, capping neighbours at 2048')
             self.n = min(2048, self.n)
@@ -134,30 +135,35 @@ class Process:
     def _distance(self, x):
         return self.index.search(-x, self.n)
     
-    def _step(self):
-        if np.all(self.P[self.state_id] == 0):
-            _, I = self._distance(np.expand_dims(self.triples[self.state_id], axis=0))
-            self.P[self.state_id] = I.ravel()
+    def _get_batch(self, id : int) -> None:
+        tmp_id = id 
+        self.state_idx[0] = id
+        for i in range(1, self.batch_size):
+            _, I = self._distance(np.expand_dims(self.triples[tmp_id], axis=0))
+            self.state_idx[i] = np.random.choice(I.ravel())
         
-        I = self.P[self.state_id]    
-        self.state_id = np.random.choice(I)
+    def _step(self) -> np.array:
+        _, I = self._distance(self.triples[self.state_idx])
+        self.state_idx = np.apply_along_axis(np.random.choice, 1, np.reshape(I, (self.batch, self.n)))
 
-        return self.state_id
+        return self.state_idx
     
     def run(self, x0, k):
-        self.state_id = x0
         t = 0 
         idx = set()
+        add = lambda x : idx.add(int(x))
         logging.info(f'Retrieving {k} candidates with starting id: {x0}')
         start = time.time()
+        self._get_batch(x0)
         while len(idx) < k:
-            idx.add(self._step())
+            candidates = self._step()
+            np.apply_along_axis(add, 0, np.expand_dims(candidates, axis=0))
             t += 1
         end = time.time() 
 
         logging.info(time_output(end - start))
 
-        return np.array(list(idx)), t
+        return np.array(list(idx))[:k], t
 
 parser = argparse.ArgumentParser()
 
