@@ -138,7 +138,7 @@ class Process:
     def _get_batch(self, id : int) -> None:
         tmp_id = id 
         self.state_idx[0] = id
-        for i in range(1, self.batch_size):
+        for i in range(1, self.batch):
             _, I = self._distance(np.expand_dims(self.triples[tmp_id], axis=0))
             self.state_idx[i] = np.random.choice(I.ravel())
         
