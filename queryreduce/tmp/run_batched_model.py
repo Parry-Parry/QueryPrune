@@ -141,9 +141,7 @@ class Process:
         for i in range(1, self.batch):
             _, I = self._distance(np.expand_dims(self.triples[tmp_id], axis=0))
             self.state_idx[i] = np.random.choice(I.ravel())
-        
-        print(self.state_idx.dtype)
-        print(self.state_idx)
+        self.state_idx = self.state_idx.astype(np.int64)
         
     def _step(self) -> np.array:
         _, I = self._distance(self.triples[self.state_idx])
