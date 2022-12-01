@@ -84,7 +84,7 @@ class Process:
         self.n = config.n
         if self.ngpu > 0:
             logging.info('Using GPU, capping neighbours at 2048')
-            self.n = np.min(2048, self.n)
+            self.n = min(2048, self.n)
 
     
     def set_nprobe(self, nprobe : int):
