@@ -79,8 +79,8 @@ class Process:
         self.P : Dict[int, np.array, np.array] = defaultdict(lambda : np.zeros(config.n))
         self.prob_dim = 3 * config.dim
         self.nprobe = config.nprobe
-        self.index = self._build_index(config.triples, config.k, config.store) if not config.built else self._load_index(config.store, config.k)
         self.ngpu = faiss.get_num_gpus()
+        self.index = self._build_index(config.triples, config.k, config.store) if not config.built else self._load_index(config.store, config.k)
         self.n = config.n
         if self.ngpu > 0:
             logging.info('Using GPU, capping neighbours at 2048')
