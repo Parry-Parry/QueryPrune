@@ -174,6 +174,7 @@ parser.add_argument('-n', type=int, default=1)
 parser.add_argument('-k', type=int, default=100)
 parser.add_argument('-store', type=str)
 parser.add_argument('-samples', type=int, default=1)
+parser.add_argument('-batch', type=int, default=16)
 parser.add_argument('-out', type=str, default='/')
 parser.add_argument('-nprobe', type=int, default=0)
 parser.add_argument('-ngpu', type=int, default=0)
@@ -203,6 +204,7 @@ def main(args):
         store = args.store,
         nprobe = nprobe, 
         ngpu = args.ngpu,
+        batch=args.batch
         built = True if args.built else False
     )
 
