@@ -204,7 +204,7 @@ def main(args):
         store = args.store,
         nprobe = nprobe, 
         ngpu = args.ngpu,
-        batch=args.batch
+        batch = args.batch,
         built = True if args.built else False
     )
 
