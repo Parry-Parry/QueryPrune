@@ -19,7 +19,7 @@ class Process:
     dim : int -> dimensionality of single embedding
     k : int -> number of clusters in Index
     n : int -> n-nearest neighbours in similarity search 
-    triples : np.array -> Set of embeddings of shape [num_samples, num_embeddings * embed_dim] **NORMALISED**
+    triples : np.array -> Set of embeddings of shape [num_samples, num_embeddings * embed_dim] 
 
     Generated Parameters
     --------------------

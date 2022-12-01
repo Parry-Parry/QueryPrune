@@ -80,8 +80,9 @@ class Process:
         self.prob_dim = 3 * config.dim
         self.nprobe = config.nprobe
         self.index = self._build_index(config.triples, config.k, config.store) if not config.built else self._load_index(config.store, config.k)
+        self.ngpu = faiss.get_num_gpus()
         self.n = config.n
-        if faiss.get_num_gpus() > 0 and config.n > 2048:
+        if self.ngpu > 0:
             logging.info('Using GPU, capping neighbours at 2048')
             self.n = np.min(2048, self.n)
 
@@ -89,26 +90,26 @@ class Process:
     def set_nprobe(self, nprobe : int):
         self.nprobe = nprobe 
         self.index.nprobe = nprobe
+
+    def _to_device(self, index):
+        if self.ngpu == 1:
+            res = faiss.StandardGpuResources() 
+            index = faiss.index_cpu_to_gpu(res, 0, index)
+        elif self.ngpu > 1:
+            index = faiss.index_cpu_to_all_gpus(index)
     
     def _load_index(self, store : str, k : int):
         assert store is not None
-        ngpus = faiss.get_num_gpus()
 
         index = faiss.read_index(store + f'triples.{k}.index')
         index.nprobe = self.nprobe
 
-        if ngpus == 1:
-            res = faiss.StandardGpuResources() 
-            index = faiss.index_cpu_to_gpu(res, 0, index)
-        elif ngpus > 1:
-            index = faiss.index_cpu_to_all_gpus(index)
+        self._to_device(index)
             
         return index
     
     def _build_index(self, triples : np.array, k : int, store : str):
         assert store is not None
-        ngpus = faiss.get_num_gpus()
-
         logging.info('Building Index...')
 
         start = time.time()
@@ -125,11 +126,7 @@ class Process:
         
         index.nprobe = self.nprobe
 
-        if ngpus == 1:
-            res = faiss.StandardGpuResources() 
-            index = faiss.index_cpu_to_gpu(res, 0, index)
-        elif ngpus > 1:
-            index = faiss.index_cpu_to_all_gpus(index)
+        self._to_device(index)
 
         return index
 
@@ -174,10 +171,15 @@ parser.add_argument('-out', type=str, default='/')
 parser.add_argument('-nprobe', type=int, default=0)
 parser.add_argument('--eq')
 parser.add_argument('--built')
+parser.add_argument('--compress', action='store_true')
 
 def main(args):
-    with bz2.open(args.source, 'rb') as f:
-        array = pickle.load(f)
+    if args.compress:
+        with bz2.open(args.source, 'rb') as f:
+            array = pickle.load(f)
+    else:
+        with open(args.source, 'rb') as f:
+            array = np.load(f)
     
     nprobe = args.k // 10 if args.nprobe == 0 else args.nprobe
    

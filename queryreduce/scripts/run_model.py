@@ -18,12 +18,17 @@ parser.add_argument('-store', type=str)
 parser.add_argument('-samples', type=int, default=1)
 parser.add_argument('-out', type=str, default='/')
 parser.add_argument('-nprobe', type=int, default=0)
-parser.add_argument('--eq')
-parser.add_argument('--built')
+parser.add_argument('--eq', action='store_true')
+parser.add_argument('--built', action='store_true')
+parser.add_argument('--compress', action='store_true')
 
 def main(args):
-    with bz2.open(args.source, 'rb') as f:
-        array = pickle.load(f)
+    if args.compress:
+        with bz2.open(args.source, 'rb') as f:
+            array = pickle.load(f)
+    else:
+        with open(args.source, 'rb') as f:
+            array = np.load(f)
     
     nprobe = args.k // 10 if args.nprobe == 0 else args.nprobe
    
