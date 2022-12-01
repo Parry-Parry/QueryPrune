@@ -169,8 +169,9 @@ parser.add_argument('-store', type=str)
 parser.add_argument('-samples', type=int, default=1)
 parser.add_argument('-out', type=str, default='/')
 parser.add_argument('-nprobe', type=int, default=0)
-parser.add_argument('--eq')
-parser.add_argument('--built')
+parser.add_argument('--start', type=int, default=None)
+parser.add_argument('--eq', action='store_true')
+parser.add_argument('--built', , action='store_true')
 parser.add_argument('--compress', action='store_true')
 
 def main(args):
@@ -197,7 +198,12 @@ def main(args):
     )
 
     model = Process(config)
-    I, t = model.run(np.random.randint(len(config.triples)), args.samples)
+    if args.start:
+        start_id = args.start 
+    else:
+        start_id = np.random.randint(0, len(config.triples))
+
+    I, t = model.run(start_id, args.samples)
 
     logging.info(f'{args.samples} samples found in {t} steps, Saving...')
 
