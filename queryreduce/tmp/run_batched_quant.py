@@ -99,14 +99,21 @@ class Process:
             index = faiss.index_cpu_to_gpu(res, 0, index)
         elif self.ngpu > 1:
             index = faiss.index_cpu_to_all_gpus(index)
+        else:
+            return False
+        
+        return True
     
     def _load_index(self, store : str):
         assert store != ''
 
         index = faiss.read_index(store)
+        gpu = self._to_device(index)
+
+        if gpu:
         index.nprobe = self.nprobe
 
-        self._to_device(index)
+        
             
         return index
 
