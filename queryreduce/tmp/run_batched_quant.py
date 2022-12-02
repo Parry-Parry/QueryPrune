@@ -100,36 +100,14 @@ class Process:
         elif self.ngpu > 1:
             index = faiss.index_cpu_to_all_gpus(index)
     
-    def _load_index(self, store : str, k : int):
-        assert store is not None
+    def _load_index(self, store : str):
+        assert store != ''
 
-        index = faiss.read_index(store + f'triples.{k}.index')
+        index = faiss.read_index(store)
         index.nprobe = self.nprobe
 
         self._to_device(index)
             
-        return index
-    
-    def _build_index(self, triples : np.array, k : int, store : str):
-        assert store is not None
-        logging.info('Building Index...')
-
-        start = time.time()
-        quantiser = faiss.IndexFlatL2(self.prob_dim) 
-        index = faiss.IndexIVFFlat(quantiser, self.prob_dim, k, faiss.METRIC_INNER_PRODUCT)
-        index.train(triples)
-        index.add(triples)
-        end = time.time()
-
-        logging.info(time_output(end - start))
-
-        logging.info('Storing Index to Disk...')
-        faiss.write_index(index, store + f'triples.{k}.index')
-        
-        index.nprobe = self.nprobe
-
-        self._to_device(index)
-
         return index
 
     def _distance(self, x):
