@@ -5,11 +5,14 @@ import bz2
 import argparse 
 import pickle
 
+from queryreduce.utils.utils import to_device
+
 parser = argparse.ArgumentParser()
 
 parser.add_argument('-source', type=str)
 parser.add_argument('-k', type=int)
 parser.add_argument('-out', type=str) 
+parser.add_argument('-gpus', type=int, default=0) 
 parser.add_argument('--compress', action="store_true")
 parser.add_argument('--l2', action="store_true")
 
@@ -32,6 +35,9 @@ def main(args):
 
     index.cp.min_points_per_centroid = 5
     index.quantizer_trains_alone = 2
+
+    if args.gpus > 0:
+        to_device(index, args.gpus)
 
     index.train(triples)
     index.add(triples)

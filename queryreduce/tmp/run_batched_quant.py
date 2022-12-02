@@ -108,13 +108,9 @@ class Process:
         assert store != ''
 
         index = faiss.read_index(store)
+        index.nprobe = self.nprobe
         gpu = self._to_device(index)
 
-        if gpu:
-        index.nprobe = self.nprobe
-
-        
-            
         return index
 
     def _distance(self, x):
@@ -137,7 +133,6 @@ class Process:
     def run(self, x0, k):
         t = 0 
         idx = set()
-        add = lambda x : idx.add(int(x))
         logging.info(f'Retrieving {k} candidates with starting id: {x0}')
         start = time.time()
         self._get_batch(x0)
@@ -176,7 +171,7 @@ def main(args):
         with open(args.source, 'rb') as f:
             array = np.load(f)
     
-    nprobe = args.k // 10 if args.nprobe == 0 else args.nprobe
+    nprobe = 3 if args.nprobe == 0 else args.nprobe
    
     config = MarkovConfig(
         triples=array,

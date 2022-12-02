@@ -14,6 +14,13 @@ def time_output(diff : int):
     else:
         return f'Completed search in {seconds} seconds'
 
+def to_device(index : faiss.index, ngpu : int):
+    if ngpu == 1:
+        res = faiss.StandardGpuResources() 
+        index = faiss.index_cpu_to_gpu(res, 0, index)
+    else:
+        index = faiss.index_cpu_to_all_gpus(index)
+
 '''
 Function weights Embeddings by given hyperparameters
 
