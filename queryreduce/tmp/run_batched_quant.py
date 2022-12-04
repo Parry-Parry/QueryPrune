@@ -7,6 +7,7 @@ import faiss
 import time 
 from typing import Dict, Tuple, Any, NamedTuple
 from collections import defaultdict
+import multiprocessing as mp
 
 def time_output(diff : int) -> str:
     seconds = diff
@@ -131,6 +132,7 @@ class Process:
         return self.state_idx
     
     def run(self, x0, k):
+        faiss.omp_set_num_threads(mp.cpu_count())
         t = 0 
         idx = set()
         logging.info(f'Retrieving {k} candidates with starting id: {x0}')

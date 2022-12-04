@@ -4,8 +4,7 @@ import logging
 import bz2
 import argparse 
 import pickle
-
-from queryreduce.utils.utils import to_device
+import multiprocessing as mp
 
 parser = argparse.ArgumentParser()
 
@@ -17,6 +16,7 @@ parser.add_argument('--compress', action="store_true")
 parser.add_argument('--l2', action="store_true")
 
 def main(args):
+    faiss.omp_set_num_threads(mp.cpu_count())
     if args.compress:
         with bz2.open(args.source, 'rb') as f:
             triples = pickle.load(f)
@@ -30,14 +30,18 @@ def main(args):
 
     faiss.normalize_L2(triples)
     quantiser = faiss.IndexHNSWFlat(prob_dim, 64) 
-    if not args.l2: index = index = faiss.IndexIVFFlat(quantiser, prob_dim, args.k)
-    else: faiss.IndexIVFFlat(quantiser, prob_dim, args.k, faiss.METRIC_L2)
+    if not args.l2: index = faiss.IndexIVFFlat(quantiser, prob_dim, args.k)
+    else: index = faiss.IndexIVFFlat(quantiser, prob_dim, args.k, faiss.METRIC_L2)
 
     index.cp.min_points_per_centroid = 5
     index.quantizer_trains_alone = 2
 
     if args.gpus > 0:
-        to_device(index, args.gpus)
+        if args.gpus == 1:
+            res = faiss.StandardGpuResources() 
+            index = faiss.index_cpu_to_gpu(res, 0, index)
+        else:
+            index = faiss.index_cpu_to_all_gpus(index)
 
     index.train(triples)
     index.add(triples)
@@ -50,5 +54,5 @@ def main(args):
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
-    logging.info('Building Faiss IVF Index')
+    logging.info('Building Faiss IVF HNSW Index')
     main(parser.parse_args())
