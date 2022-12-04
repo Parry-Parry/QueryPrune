@@ -18,9 +18,11 @@ parser.add_argument('--l2', action="store_true")
 def main(args):
     faiss.omp_set_num_threads(mp.cpu_count())
     if args.compress:
+        logging.info('Opening Compressed File')
         with bz2.open(args.source, 'rb') as f:
             triples = pickle.load(f)
     else:
+        logging.info('Loading Numpy Array')
         with open(args.source, 'rb') as f:
             triples = np.load(f)
 
