@@ -140,12 +140,14 @@ class Process:
         start = time.time()
         accum = 0
         self._get_batch(x0)
-        diff = time.time()
         while len(idx) < k:
+            batch_time = time.time()
             idx.update(list(self._step()))
-            diff = time.time() - diff
+            diff = time.time() - batch_time
+            accum += diff
             if t % 100==0: 
-                logging.info(f'Last 100 steps complete in {diff} seconds: {diff / (self.batch * 100)}  seconds p/batch')
+                logging.info(f'Last 100 steps complete in {accum} seconds | {accum / (self.batch * 100)}  seconds p/batch | {len(idx)} candidates found')
+                accum = 0
             t += 1
         end = time.time()
         logging.info(time_output(end - start))
