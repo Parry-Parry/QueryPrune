@@ -145,8 +145,8 @@ class Process:
             stamp = time.time()
             diff = stamp - accum - start
             accum += diff
-            if t % 100==0: 
-                logging.info('Last 100 steps complete in {diff} seconds, total time: {accum} seconds')
+            if t % 1000==0: 
+                logging.info(f'Last 100 steps complete in {diff} seconds, total time: {accum} seconds')
             t += 1
         end = time.time()
         logging.info(time_output(end - start))
