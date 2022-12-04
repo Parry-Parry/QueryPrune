@@ -82,7 +82,7 @@ class Process:
         self.prob_dim = 3 * config.dim
         self.nprobe = config.nprobe
         self.ngpu = config.ngpu
-        self.index = self._build_index(config.triples, config.k, config.store) if not config.built else self._load_index(config.store, config.k)
+        self.index = self._build_index(config.triples, config.k, config.store) if not config.built else self._load_index(config.store)
         self.n = config.n
         self.state_idx = np.zeros(config.batch)
         if self.ngpu > 0:
