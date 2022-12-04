@@ -28,7 +28,6 @@ def main(args):
 
     if not args.l2: metric = faiss.METRIC_INNER_PRODUCT
     else: metric = faiss.METRIC_L2
-        
 
     faiss.normalize_L2(triples)
     index = faiss.index_factory(args.code, args.factory, metric)

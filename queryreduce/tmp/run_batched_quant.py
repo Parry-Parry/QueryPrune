@@ -124,6 +124,7 @@ class Process:
             _, I = self._distance(np.expand_dims(self.triples[tmp_id], axis=0))
             self.state_idx[i] = np.random.choice(I.ravel())
         self.state_idx = self.state_idx.astype(np.int64)
+        logging.info('First Batch Found, Starting Search...')
         
     def _step(self) -> np.array:
         _, I = self._distance(self.triples[self.state_idx])
@@ -137,12 +138,17 @@ class Process:
         idx = set()
         logging.info(f'Retrieving {k} candidates with starting id: {x0}')
         start = time.time()
+        accum = 0
         self._get_batch(x0)
         while len(idx) < k:
             idx.update(list(self._step()))
+            stamp = time.time()
+            diff = stamp - accum - start
+            accum += diff
+            if t % 100==0: 
+                logging.info('Last 100 steps complete in {diff} seconds, total time: {accum} seconds')
             t += 1
-        end = time.time() 
-
+        end = time.time()
         logging.info(time_output(end - start))
 
         return np.array(list(idx))[:k], t
