@@ -92,8 +92,7 @@ class Process:
         self.state_idx = self.state_idx.astype(np.int64)
         
     def _step(self) -> np.array:
-        _, I = self._distance(self.triples[self.state_idx])
-        self.state_idx = np.apply_along_axis(np.random.choice, 1, np.reshape(I, (self.batch, self.n)))
+        self.state_idx = np.apply_along_axis(np.random.choice, 1, np.reshape(self._distance(self.triples[self.state_idx]), (self.batch, self.n)))
 
         return self.state_idx
     
