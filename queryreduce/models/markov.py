@@ -37,7 +37,6 @@ class Process:
     x0 : int -> id of starting state
     k : int -> desired number of samples
     '''
-    expand = lambda x : np.expand_dims(x, axis=0)
     def __init__(self, config : MarkovConfig) -> None:
 
         batching = {
@@ -67,19 +66,22 @@ class Process:
         gpu = to_device(index, self.ngpu)
 
         return index
+    
+    def _expand(self, x):
+        return np.expand_dims(x, axis=0)
 
     def _distance(self, x : np.array) -> np.array:
         _, I = self.index.search(-x, self.n)
         return I.ravel()
     
     def _expand_distance(self, x : np.array) -> np.array:
-        return self._distance(self.expand(x))
+        return self._distance(self._expand(x))
     
     def _get_mean_batch(self, id: int) -> None:
         self.state_idx[0] = id
         self.state_idx[1] = int(np.random.choice(self._expand_distance(self.triples[self.state_idx[i-1]])))
         for i in range(2, self.batch):
-            vec = np.mean([self.expand(self.triples[self.state_idx[i-1]]), self.expand(self.triples[self.state_idx[i-2]])], axis=1)
+            vec = np.mean([self._expand(self.triples[self.state_idx[i-1]]), self._expand(self.triples[self.state_idx[i-2]])], axis=1)
             self.state_idx[i] = np.random.choice(self._distance(vec))
         self.state_idx = self.state_idx.astype(np.int64)
 
