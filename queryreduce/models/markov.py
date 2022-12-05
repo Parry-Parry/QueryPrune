@@ -64,7 +64,7 @@ class Process:
 
         index = faiss.read_index(store)
         index.nprobe = self.nprobe
-        gpu = to_device(index. self.ngpu)
+        gpu = to_device(index, self.ngpu)
 
         return index
 
