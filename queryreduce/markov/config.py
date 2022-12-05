@@ -6,11 +6,14 @@ class MarkovConfig(NamedTuple):
     alpha : float
     beta : float
     equal : bool
+    batch : int
     n : int
     k : int 
     store : str 
     nprobe : int
+    ngpu : int
     built : bool
+
 
     
     

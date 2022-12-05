@@ -8,7 +8,6 @@ import pickle
 parser = argparse.ArgumentParser()
 
 parser.add_argument('-source', type=str)
-parser.add_argument('-target_dim', type=int)
 parser.add_argument('-factory', type=str)
 parser.add_argument('-code', type=int)
 parser.add_argument('-out', type=str) 

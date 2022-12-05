@@ -4,18 +4,17 @@ import logging
 import bz2
 import argparse 
 import pickle
+import multiprocessing as mp
 
 parser = argparse.ArgumentParser()
 
 parser.add_argument('-source', type=str)
 parser.add_argument('-k', type=int)
-parser.add_argument('-eq')
-parser.add_argument('-alpha', type=float)
-parser.add_argument('-beta', type=float)
 parser.add_argument('-out', type=str) 
 parser.add_argument('--compress', action="store_true")
 
 def main(args):
+    faiss.omp_set_num_threads(mp.cpu_count())
     if args.compress:
         with bz2.open(args.source, 'rb') as f:
             triples = pickle.load(f)
