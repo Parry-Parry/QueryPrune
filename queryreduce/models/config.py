@@ -7,12 +7,11 @@ class MarkovConfig(NamedTuple):
     beta : float
     equal : bool
     batch : int
+    batch_type : str
     n : int
-    k : int 
     store : str 
     nprobe : int
     ngpu : int
-    built : bool
 
 
     

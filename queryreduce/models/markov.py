@@ -14,43 +14,50 @@ class Process:
 
     Config Parameters
     -----------------
+    triples : np.array -> Set of embeddings of shape [num_samples, num_embeddings * embed_dim] 
+    dim : int -> dimensionality of single embedding
     alpha : float -> Weight of query embedding on distance 
     beta : float -> Weight of positive document on distance
     equal : bool -> If True apply no weighting to embedding space
-    dim : int -> dimensionality of single embedding
-    k : int -> number of clusters in Index
+    batch : int -> Batch size of query search
+    batch_type : str -> mean or std batch intialization
     n : int -> n-nearest neighbours in similarity search 
-    triples : np.array -> Set of embeddings of shape [num_samples, num_embeddings * embed_dim] 
+    store : str -> Path to index
+    nprobe : int -> How many index cells to check
+    ngpu : int -> Number of GPUs
 
     Generated Parameters
     --------------------
-    P : dict[np.array] -> Represents the transition probability matrix 
+    triples : np.array -> Weighted embedding matrix
     prob_dim : int -> Derived from 3 * embed dim
-    index : faiss.index -> Cosine Similarity Search
+    state_idx : np.array -> Current Batch Indices
 
     run() Parameters
     ----------------
     x0 : int -> id of starting state
     k : int -> desired number of samples
     '''
+    expand = lambda x : np.expand_dims(x, axis=0)
     def __init__(self, config : MarkovConfig) -> None:
+
+        batching = {
+            'std' : self._get_batch,
+            'mean' : self._get_mean_batch
+        }
+
         self.triples = weight(config.triples, config.dim, config.alpha, config.beta, config.equal)
         self.P : Dict[int, np.array, np.array] = defaultdict(lambda : np.zeros(config.n))
         self.batch = config.batch
         self.prob_dim = 3 * config.dim
         self.nprobe = config.nprobe
         self.ngpu = config.ngpu
-        self.index = self._load_index(config.store) if config.built else self._build_index(config.triples, config.k, config.store)
+        self.index = self._load_index(config.store) 
         self.n = config.n
         self.state_idx = np.zeros(config.batch)
         if self.ngpu > 0:
             logging.info('Using GPU, capping neighbours at 2048')
             self.n = min(2048, self.n)
-
-    
-    def set_nprobe(self, nprobe : int):
-        self.nprobe = nprobe 
-        self.index.nprobe = nprobe
+        self.get_batch = batching[config.batch_type]
     
     def _load_index(self, store : str):
         assert store != ''
@@ -61,17 +68,26 @@ class Process:
 
         return index
 
-    def _distance(self, x):
-        return self.index.search(-x, self.n)
+    def _distance(self, x : np.array) -> np.array:
+        _, I = self.index.search(-x, self.n)
+        return I.ravel()
     
+    def _expand_distance(self, x : np.array) -> np.array:
+        return self._distance(self.expand(x))
+    
+    def _get_mean_batch(self, id: int) -> None:
+        self.state_idx[0] = id
+        self.state_idx[1] = np.random.choice(self._expand_distance(self.triples[self.state_idx[i-1]]))
+        for i in range(2, self.batch):
+            vec = np.mean([self.expand(self.triples[self.state_idx[i-1]]), self.expand(self.triples[self.state_idx[i-2]])], axis=1)
+            self.state_idx[i] = np.random.choice(self._distance(vec))
+        self.state_idx = self.state_idx.astype(np.int64)
+
     def _get_batch(self, id : int) -> None:
-        tmp_id = id 
         self.state_idx[0] = id
         for i in range(1, self.batch):
-            _, I = self._distance(np.expand_dims(self.triples[tmp_id], axis=0))
-            self.state_idx[i] = np.random.choice(I.ravel())
+            self.state_idx[i] = np.random.choice(self._expand_distance(self.triples[self.state_idx[i-1]]))
         self.state_idx = self.state_idx.astype(np.int64)
-        logging.info('First Batch Found, Starting Search...')
         
     def _step(self) -> np.array:
         _, I = self._distance(self.triples[self.state_idx])
@@ -79,21 +95,22 @@ class Process:
 
         return self.state_idx
     
-    def run(self, x0, k):
+    def run(self, x0 : int, k : int) -> Tuple[np.array, int]:
         faiss.omp_set_num_threads(mp.cpu_count())
         t = 0 
         idx = set()
         logging.info(f'Retrieving {k} candidates with starting id: {x0}')
         start = time.time()
         accum = 0
-        self._get_batch(x0)
+        self.get_batch(x0)
+        logging.info('First Batch Found, Starting Search...')
         while len(idx) < k:
             batch_time = time.time()
             idx.update(list(self._step()))
             diff = time.time() - batch_time
             accum += diff
             if t % 100==0: 
-                logging.info(f'Last 100 steps complete in {accum} seconds | {accum / (self.batch * 100)}  seconds p/batch | {len(idx)} candidates found')
+                logging.info(f'Last 100 steps complete in {accum} seconds | {accum / (self.batch * 100)}  seconds per query | {len(idx)} candidates found')
                 accum = 0
             t += 1
         end = time.time()

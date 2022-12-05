@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='queryreduce',
-    version='0.1.0',
+    version='0.1.1',
     author='Andrew Parry',
     author_email='a.parry.1@research.gla.ac.uk',
     description="Reduction of Dataset by Markov Heuristic Search",

@@ -1,14 +1,10 @@
-from typing import Any, List
+from typing import List
 import numpy as np
 import pandas as pd
 from pandas.io.parsers import TextFileReader
 from sentence_transformers import SentenceTransformer
 import pickle
 import bz2
-
-'''
-Retrieve text associated with triplets of IDs, generate embeddings and return tuples
-'''
 
 class VectorFactory:
     def __init__(self, model : str, **kwargs) -> None:
@@ -25,7 +21,7 @@ class VectorFactory:
 
         return batch.reshape((batch.shape[0], -1))
 
-    def run(self, triples : TextFileReader, out : str, compresslevel=9):
+    def run(self, triples : TextFileReader, out : str):
         batches = [self._batch_create(chunk) for chunk in triples]
         with open(out, 'wb') as f:
-            np.save(np.concatenate(batches, axis=0), f)
+            np.save(f, np.concatenate(batches, axis=0))
