@@ -12,6 +12,7 @@ class VectorFactory:
 
     def _batch_encode(self, txt : List[str]) -> np.array:
         return self.model.encode(txt, convert_to_numpy=True)
+        
     def _batch_create(self, triples : pd.DataFrame):
         e_q = self._batch_encode(triples['qid'].to_list())
         e_pos = self._batch_encode(triples['pid+'].to_list())
