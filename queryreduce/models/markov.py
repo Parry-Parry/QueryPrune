@@ -53,7 +53,7 @@ class Process:
         self.ngpu = config.ngpu
         self.index = self._load_index(config.store) 
         self.n = config.n
-        self.state_idx = np.zeros(config.batch)
+        self.state_idx = np.zeros(config.batch, dtype=np.int64)
         if self.ngpu > 0:
             logging.info('Using GPU, capping neighbours at 2048')
             self.n = min(2048, self.n)
@@ -77,7 +77,7 @@ class Process:
     
     def _get_mean_batch(self, id: int) -> None:
         self.state_idx[0] = id
-        self.state_idx[1] = np.random.choice(self._expand_distance(self.triples[self.state_idx[i-1]]))
+        self.state_idx[1] = int(np.random.choice(self._expand_distance(self.triples[self.state_idx[i-1]])))
         for i in range(2, self.batch):
             vec = np.mean([self.expand(self.triples[self.state_idx[i-1]]), self.expand(self.triples[self.state_idx[i-2]])], axis=1)
             self.state_idx[i] = np.random.choice(self._distance(vec))
