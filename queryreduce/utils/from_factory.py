@@ -23,7 +23,6 @@ def main(args):
         with open(args.source, 'rb') as f:
             triples = np.load(f)
 
-    prob_dim = triples.shape[-1]
     logging.info('Training Index')
 
     if not args.l2: metric = faiss.METRIC_INNER_PRODUCT
