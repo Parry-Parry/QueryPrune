@@ -3,7 +3,7 @@ import logging
 from typing import Any, List
 import numpy as np
 import pandas as pd
-from queryreduce.representation import VectorFactory
+from queryreduce.models.vectorfactory import VectorFactory
 import pickle
 import bz2
 
