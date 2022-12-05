@@ -100,6 +100,10 @@ class Process:
     def _retrieve(self, x : np.array) -> np.array:
         result = np.stack([self.cache[id] for id in x])
         return result
+    
+    def _choice(self, x):
+        vec_in = np.vectorize(lambda x : x in self.cache)
+        
         
     def _step(self) -> np.array:
         vec_in = np.vectorize(lambda x : x in self.cache)
