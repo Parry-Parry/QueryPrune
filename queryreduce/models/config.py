@@ -8,6 +8,7 @@ class MarkovConfig(NamedTuple):
     equal : bool
     batch : int
     batch_type : str
+    choice : str
     n : int
     store : str 
     nprobe : int

@@ -43,6 +43,10 @@ class Process:
             'std' : self._get_batch,
             'mean' : self._get_mean_batch
         }
+        sampling = {
+            'std' : np.random.choice,
+            'constraint' : self._choice
+        }
 
         self.triples = weight(config.triples, config.dim, config.alpha, config.beta, config.equal)
         self.P : Dict[int, np.array, np.array] = defaultdict(lambda : np.zeros(config.n))
@@ -58,6 +62,7 @@ class Process:
             logging.info('Using GPU, capping neighbours at 2048')
             self.n = min(2048, self.n)
         self.get_batch = batching[config.batch_type]
+        self.choice = sampling[config.choice]
     
     def _load_index(self, store : str):
         assert store != ''
@@ -103,27 +108,32 @@ class Process:
     
     def _choice(self, x):
         vec_in = np.vectorize(lambda x : x in self.cache)
-        
-        
+        filter = np.logical_not(vec_in(x))
+        if np.any(filter==True):
+            return np.random.choice(x[filter])
+        else:
+            return np.random.choice(x)
+
     def _step(self) -> np.array:
         vec_in = np.vectorize(lambda x : x in self.cache)
         filter = vec_in(self.state_idx)
 
-        if len(filter != 0) and len(filter != self.batch):
+        if np.any(filter==False) and np.any(filter==True):
             tmp_array = np.zeros((self.batch, self.n), dtype=np.int64)
             cached = self.state_idx[filter]
             compute = self.state_idx[np.logical_not(filter)]
             tmp_array[filter] = self._retrieve(cached)
             computed = np.reshape(self._distance(self.triples[compute]), (len(compute), self.n))
             tmp_array[np.logical_not(filter)] = computed
+
             for key, value in zip(compute, computed):
                 self.cache[key] = value
 
-            self.state_idx = np.apply_along_axis(np.random.choice, 1, tmp_array)
-        elif len(filter==self.batch):
-            self.state_idx = np.apply_along_axis(np.random.choice, 1, self._retrieve(self.state_idx))
+            self.state_idx = np.apply_along_axis(self.choice, 1, tmp_array)
+        elif np.all(filter==True):
+            self.state_idx = np.apply_along_axis(self.choice, 1, self._retrieve(self.state_idx))
         else:
-            self.state_idx = np.apply_along_axis(np.random.choice, 1, np.reshape(self._distance(self.triples[self.state_idx]), (self.batch, self.n)))
+            self.state_idx = np.apply_along_axis(self.choice, 1, np.reshape(self._distance(self.triples[self.state_idx]), (self.batch, self.n)))
             
         return self.state_idx
     
