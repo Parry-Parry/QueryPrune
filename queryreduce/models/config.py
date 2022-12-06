@@ -14,6 +14,14 @@ class MarkovConfig(NamedTuple):
     nprobe : int
     ngpu : int
 
+class AcceptanceConfig(NamedTuple):
+    states : Any
+    metric : str 
+    sub : int 
+    alpha : float 
+    update : int 
+    compare : str 
+    gpus : int
 
     
     
