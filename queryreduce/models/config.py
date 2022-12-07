@@ -23,5 +23,14 @@ class AcceptanceConfig(NamedTuple):
     compare : str 
     gpus : int
 
+class CentroidConfig(NamedTuple):
+    states : Any
+    sub : int 
+    update : int 
+    compare : str 
+    threshold : str
+    threshold_init : float
+    gpus : int
+
     
     
