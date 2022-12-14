@@ -1,5 +1,6 @@
 import faiss
 import numpy as np 
+import re
 
 def time_output(diff : int):
     seconds = diff
@@ -44,3 +45,6 @@ def weight(array : np.array, dim : int, alpha : float, beta : float, equal : boo
     array[:, 2*dim:3*dim] = gamma * array[:, 2*dim:3*dim]
     faiss.normalize_L2(array)
     return array
+
+def clean_text(text):
+    return re.sub(r'[^A-Za-z0-9 ]+', '', text)

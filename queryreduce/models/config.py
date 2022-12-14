@@ -32,5 +32,13 @@ class CentroidConfig(NamedTuple):
     threshold_init : float
     gpus : int
 
-    
+class ClusterConfig(NamedTuple):
+    niter : int
+    nclust : int 
+    cmin : int 
+
+class ThresholdConfig(NamedTuple):
+    triples : Any
+    k : int 
+    t : float 
     
