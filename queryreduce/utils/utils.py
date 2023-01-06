@@ -48,3 +48,10 @@ def weight(array : np.array, dim : int, alpha : float, beta : float, equal : boo
 
 def clean_text(text):
     return re.sub(r'[^A-Za-z0-9 ]+', '', text)
+
+def truncate(array, sig, dim=768):
+    q = array[:, :dim]
+    pos = array[:, dim:2*dim]
+    neg = array[:, 2*dim:3*dim]
+
+    return np.stack([q[:, :sig], pos[:, :sig], neg[:, :sig]], axis=1)
