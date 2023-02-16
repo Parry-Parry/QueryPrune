@@ -1,19 +1,22 @@
-import time 
-import logging
-
 import numpy as np 
+import logging 
+import time 
 from sklearn.metrics.pairwise import cosine_similarity
 
-from queryreduce.models.config import ThresholdConfig
 
 class Process:
     state_id = 0
-    def __init__(self, config : ThresholdConfig) -> None:
-        self.triples = config.triples
-        self.index = np.arange(len(config.triples)) # Index for candidates
-        self.k = config.k # Num samples for mean
-        self.t = config.t # Threshold similarity
+    def __init__(self, triples, k=100, t=0.65) -> None:
+        self.triples = triples
+        self.index = np.arange(len(triples)) # Index for candidates
+        self.k = k # Num samples for mean
         self.c = None # Set of Candidates
+        self.threshold = None
+        self.t = t
+    
+    def _set_t(self, step):
+        if step > self.time[-1]: return None
+        self.t = np.interp(step, self.time, self.thresholds)
 
     def _distance(self, x, mean):
         return np.mean(cosine_similarity(x.reshape(1, -1), mean))
@@ -22,11 +25,15 @@ class Process:
         c = list(self.c)
         l_c = len(c)
         if l_c > self.k:
-            return np.random.choice(c, self.k, replace=False)
+            choice = np.random.choice(c, self.k, replace=False)
+            self.threshold = choice
+            return choice
         else:
             return c 
     
     def _get_candidates(self):
+        if self.threshold is not None:
+            return self.triples[self.threshold]
         idx = self._get_indices()
 
         if len(idx) > 1:
@@ -43,12 +50,12 @@ class Process:
 
         if d < self.t: # If candidate dissimilarity over threshold
             self.state_id = c_id # Accept Candidate
-
+    
         return self.state_id
     
     def run(self, x0, k):
         self.state_id = x0
-        t = 0 
+        step = 0 
         self.c = set() # Set allows for the compiler to ignore candidates we have already accepted
         logging.info(f'Retrieving {k} candidates with starting id: {x0}')
         assert self.c is not None
@@ -56,10 +63,10 @@ class Process:
         start = time.time()
         while len(self.c) < k:
             self.c.add(self._step())
-            t += 1
-            if t % 1000: logging.info(f'{t} steps complete, {len(self.c)} candidates found')
+            step += 1
+            if step % 1000 == 0: logging.info(f'{step} steps complete, {len(self.c)} candidates found')
         end = time.time() - start 
 
         logging.info(f'Completed collection in {end} seconds')
 
-        return list(self.c), t
+        return list(self.c), step, end
